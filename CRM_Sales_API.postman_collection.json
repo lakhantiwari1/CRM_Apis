@@ -1,0 +1,841 @@
+{
+  "info": {
+    "_postman_id": "crm-sales-api-collection",
+    "name": "CRM Sales Management API",
+    "description": "Complete Postman collection for CRM Sales Management System. \n\n## Setup\n1. Import this collection\n2. Set `baseUrl` variable to `http://localhost:5000/api`\n3. Run 'Login' request first — token auto-saves\n4. All protected routes use `{{accessToken}}` variable automatically",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://crm-sales-api.onrender.com/api", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "leadId", "value": "", "type": "string" },
+    { "key": "customerId", "value": "", "type": "string" },
+    { "key": "dealId", "value": "", "type": "string" },
+    { "key": "activityId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "🔒 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Admin\",\n  \"email\": \"admin@crm.com\",\n  \"password\": \"Admin@123\",\n  \"phone\": \"+1234567890\",\n  \"role\": \"admin\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "  console.log('Token saved:', res.data.accessToken);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Login — Admin",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@crm.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "  console.log('Logged in as Admin');",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Login — Sales Manager",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager@crm.com\",\n  \"password\": \"Manager@123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Login — Sales Executive",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"executive@crm.com\",\n  \"password\": \"Executive@123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/auth/me",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+9876543210\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/auth/change-password",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Admin@123\",\n  \"newPassword\": \"NewAdmin@456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/refresh",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"<your_refresh_token>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Users (Admin)",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/users",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Executive\",\n  \"email\": \"exec2@crm.com\",\n  \"password\": \"Exec@1234\",\n  \"phone\": \"+1111111111\",\n  \"role\": \"sales_executive\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('userId', res.data._id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10&sort=-createdAt&role=sales_executive&isActive=true",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "-createdAt" },
+                { "key": "role", "value": "sales_executive" },
+                { "key": "isActive", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Users — Search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/users?search=john",
+              "query": [{ "key": "search", "value": "john" }]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Executive Name\",\n  \"phone\": \"+2222222222\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/{{userId}}/deactivate"
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/{{userId}}/activate"
+          }
+        },
+        {
+          "name": "Get Sales Executives",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/sales-executives"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Leads",
+      "item": [
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leads",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@company.com\",\n  \"phone\": \"+1987654321\",\n  \"company\": \"Tech Corp\",\n  \"source\": \"Website\",\n  \"priority\": \"High\",\n  \"description\": \"Interested in enterprise plan\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('leadId', res.data._id);",
+                "  console.log('Lead ID:', res.data._id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Get All Leads",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leads?page=1&limit=10&sort=-createdAt",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "-createdAt" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Leads — Filter by Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leads?status=New&priority=High&source=Website",
+              "query": [
+                { "key": "status", "value": "New" },
+                { "key": "priority", "value": "High" },
+                { "key": "source", "value": "Website" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Leads — Search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leads?search=jane",
+              "query": [{ "key": "search", "value": "jane" }]
+            }
+          }
+        },
+        {
+          "name": "Get Leads — Date Range",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/leads?startDate=2024-01-01&endDate=2024-12-31",
+              "query": [
+                { "key": "startDate", "value": "2024-01-01" },
+                { "key": "endDate", "value": "2024-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lead by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leads/{{leadId}}"
+          }
+        },
+        {
+          "name": "Update Lead",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/leads/{{leadId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"High\",\n  \"description\": \"Updated: Very interested in premium plan\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Lead Status (Manager+)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/leads/{{leadId}}/status",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Qualified\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Assign Lead (Manager+)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/leads/{{leadId}}/assign",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": \"<sales_executive_user_id>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Convert Lead → Customer + Deal",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leads/{{leadId}}/convert",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealName\": \"Tech Corp Enterprise License\",\n  \"dealValue\": 50000,\n  \"probability\": 80,\n  \"expectedClosingDate\": \"2025-03-31\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('customerId', res.data.customer._id);",
+                "  pm.collectionVariables.set('dealId', res.data.deal._id);",
+                "  console.log('Customer ID:', res.data.customer._id);",
+                "  console.log('Deal ID:', res.data.deal._id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Delete Lead (Manager+)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/leads/{{leadId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Customers",
+      "item": [
+        {
+          "name": "Create Customer (Manager+)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/customers",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"email\": \"contact@acme.com\",\n  \"phone\": \"+1555000000\",\n  \"company\": \"Acme Corporation\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"country\": \"USA\",\n    \"zipCode\": \"10001\"\n  },\n  \"status\": \"Active\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('customerId', res.data._id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/customers?page=1&limit=10&status=Active",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "Active" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customers/{{customerId}}"
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/customers/{{customerId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Active\",\n  \"notes\": \"VIP customer — priority support\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Customer (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/customers/{{customerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💼 Deals",
+      "item": [
+        {
+          "name": "Create Deal",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/deals",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealName\": \"Cloud Migration Project\",\n  \"customer\": \"{{customerId}}\",\n  \"dealValue\": 75000,\n  \"probability\": 65,\n  \"expectedClosingDate\": \"2025-06-30\",\n  \"stage\": \"Discovery\",\n  \"description\": \"Full cloud migration for 500 users\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('dealId', res.data._id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Get All Deals",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/deals?page=1&limit=10&sort=-dealValue",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "-dealValue" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Deals — Filter by Stage",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/deals?stage=Proposal&isClosed=false",
+              "query": [
+                { "key": "stage", "value": "Proposal" },
+                { "key": "isClosed", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Deals — Amount Range",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/deals?minValue=10000&maxValue=100000",
+              "query": [
+                { "key": "minValue", "value": "10000" },
+                { "key": "maxValue", "value": "100000" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Deal by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/deals/{{dealId}}"
+          }
+        },
+        {
+          "name": "Update Deal",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/deals/{{dealId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"probability\": 80,\n  \"description\": \"Updated scope includes 600 users\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Deal Stage → Proposal",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/deals/{{dealId}}/stage",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"Proposal\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Deal Stage → Won",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/deals/{{dealId}}/stage",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"Won\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Deal Stage → Lost (requires reason)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/deals/{{dealId}}/stage",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"Lost\",\n  \"lostReason\": \"Budget constraints — customer postponed to next quarter\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Assign Deal (Manager+)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/deals/{{dealId}}/assign",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": \"<user_id>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Deal (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/deals/{{dealId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Activities",
+      "item": [
+        {
+          "name": "Create Activity — Call",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/activities",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Call\",\n  \"title\": \"Follow-up call with Jane Smith\",\n  \"description\": \"Discuss proposal details and pricing\",\n  \"assignedTo\": \"<user_id>\",\n  \"dueDate\": \"2025-01-15T10:00:00Z\",\n  \"relatedEntityType\": \"Lead\",\n  \"relatedEntityId\": \"{{leadId}}\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  const res = pm.response.json();",
+                "  pm.collectionVariables.set('activityId', res.data._id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Create Activity — Meeting for Deal",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/activities",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Meeting\",\n  \"title\": \"Product Demo — Cloud Migration\",\n  \"description\": \"Live demo of cloud platform capabilities\",\n  \"assignedTo\": \"<user_id>\",\n  \"dueDate\": \"2025-01-20T14:00:00Z\",\n  \"relatedEntityType\": \"Deal\",\n  \"relatedEntityId\": \"{{dealId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Activities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities?page=1&limit=10&sort=dueDate",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "dueDate" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Activities — Filter Overdue",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities?status=Overdue",
+              "query": [{ "key": "status", "value": "Overdue" }]
+            }
+          }
+        },
+        {
+          "name": "Get Activities — For a Lead",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities?relatedEntityType=Lead&relatedEntityId={{leadId}}",
+              "query": [
+                { "key": "relatedEntityType", "value": "Lead" },
+                { "key": "relatedEntityId", "value": "{{leadId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Activity by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/activities/{{activityId}}"
+          }
+        },
+        {
+          "name": "Update Activity",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/activities/{{activityId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Rescheduled call with Jane Smith\",\n  \"dueDate\": \"2025-01-16T11:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mark Activity Complete",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/activities/{{activityId}}/complete"
+          }
+        },
+        {
+          "name": "Delete Activity (Manager+)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/activities/{{activityId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📜 Timeline",
+      "item": [
+        {
+          "name": "Get Lead Timeline",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/timeline/Lead/{{leadId}}?page=1&limit=20",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Timeline",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/timeline/Customer/{{customerId}}"
+          }
+        },
+        {
+          "name": "Get Deal Timeline",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/timeline/Deal/{{dealId}}"
+          }
+        },
+        {
+          "name": "Get All Timeline (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/timeline?page=1&limit=20&entityType=Lead",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "entityType", "value": "Lead" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/stats"
+          }
+        },
+        {
+          "name": "Get Sales Pipeline",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/pipeline"
+          }
+        },
+        {
+          "name": "Get Team Performance (Manager+)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/team-performance"
+          }
+        },
+        {
+          "name": "Get Leads by Source",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/lead-sources"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    }
+  ]
+}

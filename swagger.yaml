@@ -1,0 +1,1302 @@
+openapi: 3.0.3
+info:
+  title: CRM Sales Management API
+  description: |
+    A complete RESTful backend for a CRM Sales Management System.
+
+    ## Authentication
+    This API supports two authentication methods:
+    1. **Bearer Token** - Include `Authorization: Bearer <token>` in headers
+    2. **HTTP-only Cookie** - `accessToken` cookie set automatically on login
+
+    ## Role-Based Access
+    | Role | Level |
+    |------|-------|
+    | `admin` | Full access to all resources |
+    | `sales_manager` | Team management and reporting |
+    | `sales_executive` | Own assigned leads, customers, and deals |
+
+    ## Response Format
+    All responses follow a consistent structure:
+    ```json
+    {
+      "success": true,
+      "message": "Resource fetched successfully",
+      "data": {}
+    }
+    ```
+
+    ## Pagination
+    Paginated responses include metadata:
+    ```json
+    {
+      "pagination": {
+        "currentPage": 1,
+        "pageSize": 10,
+        "totalRecords": 100,
+        "totalPages": 10,
+        "hasNextPage": true,
+        "hasPrevPage": false
+      }
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: CRM API Support
+    email: support@crm.com
+
+servers:
+  - url: http://localhost:5000/api
+    description: Development Server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation successful
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: An error occurred
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+        pageSize:
+          type: integer
+        totalRecords:
+          type: integer
+        totalPages:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPrevPage:
+          type: boolean
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64a7b8c9d0e1f2a3b4c5d6e7
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: john@example.com
+        phone:
+          type: string
+          example: "+1234567890"
+        role:
+          type: string
+          enum: [admin, sales_manager, sales_executive]
+        isActive:
+          type: boolean
+        lastLogin:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Lead:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        source:
+          type: string
+          enum: [Website, Referral, Social Media, Email, Phone, Other]
+        status:
+          type: string
+          enum: [New, Contacted, Qualified, Unqualified, Converted, Lost]
+        priority:
+          type: string
+          enum: [Low, Medium, High]
+        assignedTo:
+          $ref: '#/components/schemas/User'
+        isConverted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Customer:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: object
+          properties:
+            street: { type: string }
+            city: { type: string }
+            state: { type: string }
+            country: { type: string }
+            zipCode: { type: string }
+        status:
+          type: string
+          enum: [Active, Inactive, Churned, Prospect]
+        originalLead:
+          $ref: '#/components/schemas/Lead'
+        assignedTo:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+
+    Deal:
+      type: object
+      properties:
+        _id:
+          type: string
+        dealName:
+          type: string
+        customer:
+          $ref: '#/components/schemas/Customer'
+        lead:
+          $ref: '#/components/schemas/Lead'
+        assignedTo:
+          $ref: '#/components/schemas/User'
+        dealValue:
+          type: number
+        probability:
+          type: number
+          minimum: 0
+          maximum: 100
+        expectedRevenue:
+          type: number
+        expectedClosingDate:
+          type: string
+          format: date-time
+        stage:
+          type: string
+          enum: [Qualification, Discovery, Proposal, Negotiation, Won, Lost]
+        isClosed:
+          type: boolean
+        lostReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Activity:
+      type: object
+      properties:
+        _id:
+          type: string
+        type:
+          type: string
+          enum: [Call, Email, Meeting, Demo, Follow-up, Reminder, Note]
+        title:
+          type: string
+        description:
+          type: string
+        assignedTo:
+          $ref: '#/components/schemas/User'
+        dueDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [Pending, Completed, Overdue]
+        completedDate:
+          type: string
+          format: date-time
+        relatedEntityType:
+          type: string
+          enum: [Lead, Customer, Deal]
+        relatedEntityId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Timeline:
+      type: object
+      properties:
+        _id:
+          type: string
+        action:
+          type: string
+          example: lead_assigned
+        entityType:
+          type: string
+          enum: [Lead, Customer, Deal, Activity, User]
+        entityId:
+          type: string
+        performedBy:
+          $ref: '#/components/schemas/User'
+        previousValue:
+          type: object
+        newValue:
+          type: object
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number
+      schema:
+        type: integer
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      description: Results per page (max 100)
+      schema:
+        type: integer
+        default: 10
+    SortParam:
+      name: sort
+      in: query
+      description: Sort fields (prefix with - for descending). e.g. -createdAt,name
+      schema:
+        type: string
+    SearchParam:
+      name: search
+      in: query
+      description: Search keyword
+      schema:
+        type: string
+
+security:
+  - BearerAuth: []
+  - CookieAuth: []
+
+paths:
+  # ─── HEALTH CHECK ─────────────────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: API is running
+
+  # ─── AUTH ─────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  example: john@example.com
+                phone:
+                  type: string
+                  example: "+1234567890"
+                password:
+                  type: string
+                  example: Password@123
+                role:
+                  type: string
+                  enum: [admin, sales_manager, sales_executive]
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: '#/components/schemas/User' }
+                          accessToken: { type: string }
+        '400':
+          description: Validation error
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: admin@crm.com
+                password:
+                  type: string
+                  example: Admin@123
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+        '401':
+          description: Invalid refresh token
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: Profile fetched
+    patch:
+      tags: [Authentication]
+      summary: Update own profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+      responses:
+        '200':
+          description: Profile updated
+
+  /auth/change-password:
+    patch:
+      tags: [Authentication]
+      summary: Change own password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string }
+      responses:
+        '200':
+          description: Password changed
+
+  # ─── USERS ────────────────────────────────────────────────────────────────
+  /users:
+    get:
+      tags: [Users]
+      summary: Get all users (Admin only)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, sales_manager, sales_executive]
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Users fetched successfully
+        '403':
+          description: Admin access required
+    post:
+      tags: [Users]
+      summary: Create a user (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created
+        '409':
+          description: Email already exists
+
+  /users/sales-executives:
+    get:
+      tags: [Users]
+      summary: Get all active sales executives (Admin/Manager)
+      responses:
+        '200':
+          description: Sales executives fetched
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: User fetched
+        '404':
+          description: User not found
+    put:
+      tags: [Users]
+      summary: Update user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+                role: { type: string }
+                isActive: { type: boolean }
+      responses:
+        '200':
+          description: User updated
+    delete:
+      tags: [Users]
+      summary: Delete user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: User deleted
+
+  /users/{id}/activate:
+    patch:
+      tags: [Users]
+      summary: Activate user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: User activated
+
+  /users/{id}/deactivate:
+    patch:
+      tags: [Users]
+      summary: Deactivate user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: User deactivated
+
+  # ─── LEADS ────────────────────────────────────────────────────────────────
+  /leads:
+    get:
+      tags: [Leads]
+      summary: Get all leads
+      description: |
+        - **Admin**: All leads
+        - **Sales Manager**: All leads
+        - **Sales Executive**: Only assigned leads
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [New, Contacted, Qualified, Unqualified, Converted, Lost]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [Low, Medium, High]
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [Website, Referral, Social Media, Email, Phone, Other]
+        - name: assignedTo
+          in: query
+          schema: { type: string }
+        - name: isConverted
+          in: query
+          schema: { type: boolean }
+        - name: startDate
+          in: query
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Leads fetched successfully
+    post:
+      tags: [Leads]
+      summary: Create a new lead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, example: Jane Smith }
+                email: { type: string, example: jane@example.com }
+                phone: { type: string }
+                company: { type: string }
+                source:
+                  type: string
+                  enum: [Website, Referral, Social Media, Email, Phone, Other]
+                status:
+                  type: string
+                  enum: [New, Contacted, Qualified, Unqualified, Converted, Lost]
+                priority:
+                  type: string
+                  enum: [Low, Medium, High]
+                assignedTo: { type: string }
+                description: { type: string }
+      responses:
+        '201':
+          description: Lead created
+
+  /leads/{id}:
+    get:
+      tags: [Leads]
+      summary: Get lead by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lead fetched
+        '404':
+          description: Lead not found
+    put:
+      tags: [Leads]
+      summary: Update lead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Lead'
+      responses:
+        '200':
+          description: Lead updated
+    delete:
+      tags: [Leads]
+      summary: Delete lead (Admin/Manager)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lead deleted
+
+  /leads/{id}/status:
+    patch:
+      tags: [Leads]
+      summary: Update lead status (Admin/Manager)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [New, Contacted, Qualified, Unqualified, Converted, Lost]
+      responses:
+        '200':
+          description: Lead status updated
+
+  /leads/{id}/assign:
+    patch:
+      tags: [Leads]
+      summary: Assign/reassign lead (Admin/Manager)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assignedTo]
+              properties:
+                assignedTo:
+                  type: string
+                  description: Sales Executive user ID
+      responses:
+        '200':
+          description: Lead assigned
+
+  /leads/{id}/convert:
+    post:
+      tags: [Leads]
+      summary: Convert qualified lead to customer + deal
+      description: |
+        Uses MongoDB transaction. Only leads with status `Qualified` can be converted.
+        Creates both Customer and Deal atomically.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dealName, dealValue]
+              properties:
+                dealName: { type: string, example: Enterprise License Deal }
+                dealValue: { type: number, example: 50000 }
+                probability: { type: number, example: 75 }
+                expectedClosingDate:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Lead converted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lead: { $ref: '#/components/schemas/Lead' }
+                  customer: { $ref: '#/components/schemas/Customer' }
+                  deal: { $ref: '#/components/schemas/Deal' }
+        '422':
+          description: Lead not eligible for conversion
+
+  # ─── CUSTOMERS ────────────────────────────────────────────────────────────
+  /customers:
+    get:
+      tags: [Customers]
+      summary: Get all customers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Active, Inactive, Churned, Prospect]
+        - name: assignedTo
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Customers fetched
+    post:
+      tags: [Customers]
+      summary: Create customer manually (Admin/Manager)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+                company: { type: string }
+                address: { type: object }
+                status: { type: string }
+                assignedTo: { type: string }
+                notes: { type: string }
+      responses:
+        '201':
+          description: Customer created
+
+  /customers/{id}:
+    get:
+      tags: [Customers]
+      summary: Get customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Customer fetched
+    put:
+      tags: [Customers]
+      summary: Update customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '200':
+          description: Customer updated
+    delete:
+      tags: [Customers]
+      summary: Delete customer (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Customer deleted
+
+  # ─── DEALS ────────────────────────────────────────────────────────────────
+  /deals:
+    get:
+      tags: [Deals]
+      summary: Get all deals
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: stage
+          in: query
+          schema:
+            type: string
+            enum: [Qualification, Discovery, Proposal, Negotiation, Won, Lost]
+        - name: assignedTo
+          in: query
+          schema: { type: string }
+        - name: isClosed
+          in: query
+          schema: { type: boolean }
+        - name: minValue
+          in: query
+          schema: { type: number }
+        - name: maxValue
+          in: query
+          schema: { type: number }
+        - name: closingDateStart
+          in: query
+          schema: { type: string, format: date }
+        - name: closingDateEnd
+          in: query
+          schema: { type: string, format: date }
+        - name: customer
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Deals fetched
+    post:
+      tags: [Deals]
+      summary: Create a new deal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dealName, customer, dealValue]
+              properties:
+                dealName: { type: string }
+                customer: { type: string }
+                lead: { type: string }
+                assignedTo: { type: string }
+                dealValue: { type: number, minimum: 0.01 }
+                probability: { type: number, minimum: 0, maximum: 100 }
+                expectedClosingDate: { type: string, format: date-time }
+                stage: { type: string }
+                description: { type: string }
+      responses:
+        '201':
+          description: Deal created
+
+  /deals/{id}:
+    get:
+      tags: [Deals]
+      summary: Get deal by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Deal fetched
+    put:
+      tags: [Deals]
+      summary: Update deal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Deal'
+      responses:
+        '200':
+          description: Deal updated
+    delete:
+      tags: [Deals]
+      summary: Delete deal (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Deal deleted
+
+  /deals/{id}/stage:
+    patch:
+      tags: [Deals]
+      summary: Update deal stage
+      description: |
+        **Business Rules Enforced:**
+        - Won/Lost deals cannot be moved back to active stages
+        - Lost deals require a `lostReason`
+        - Deal value must be > 0
+        - Won deals auto-set `actualClosingDate`
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stage]
+              properties:
+                stage:
+                  type: string
+                  enum: [Qualification, Discovery, Proposal, Negotiation, Won, Lost]
+                lostReason:
+                  type: string
+                  description: Required when stage is Lost
+      responses:
+        '200':
+          description: Stage updated
+        '422':
+          description: Business rule violation
+
+  /deals/{id}/assign:
+    patch:
+      tags: [Deals]
+      summary: Assign deal to user (Admin/Manager)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assignedTo]
+              properties:
+                assignedTo: { type: string }
+      responses:
+        '200':
+          description: Deal assigned
+
+  # ─── ACTIVITIES ───────────────────────────────────────────────────────────
+  /activities:
+    get:
+      tags: [Activities]
+      summary: Get all activities
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [Call, Email, Meeting, Demo, Follow-up, Reminder, Note]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Pending, Completed, Overdue]
+        - name: assignedTo
+          in: query
+          schema: { type: string }
+        - name: relatedEntityType
+          in: query
+          schema:
+            type: string
+            enum: [Lead, Customer, Deal]
+        - name: relatedEntityId
+          in: query
+          schema: { type: string }
+        - name: dueDateStart
+          in: query
+          schema: { type: string, format: date }
+        - name: dueDateEnd
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Activities fetched
+    post:
+      tags: [Activities]
+      summary: Create an activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, title, assignedTo]
+              properties:
+                type:
+                  type: string
+                  enum: [Call, Email, Meeting, Demo, Follow-up, Reminder, Note]
+                title: { type: string }
+                description: { type: string }
+                assignedTo: { type: string }
+                dueDate: { type: string, format: date-time }
+                relatedEntityType:
+                  type: string
+                  enum: [Lead, Customer, Deal]
+                relatedEntityId: { type: string }
+      responses:
+        '201':
+          description: Activity created
+
+  /activities/{id}:
+    get:
+      tags: [Activities]
+      summary: Get activity by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Activity fetched
+    put:
+      tags: [Activities]
+      summary: Update activity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activity'
+      responses:
+        '200':
+          description: Activity updated
+    delete:
+      tags: [Activities]
+      summary: Delete activity (Admin/Manager)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Activity deleted
+
+  /activities/{id}/complete:
+    patch:
+      tags: [Activities]
+      summary: Mark activity as completed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Activity completed
+
+  # ─── TIMELINE ─────────────────────────────────────────────────────────────
+  /timeline:
+    get:
+      tags: [Timeline]
+      summary: Get all timeline entries (Admin only)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: action
+          in: query
+          schema: { type: string }
+        - name: entityType
+          in: query
+          schema: { type: string }
+        - name: performedBy
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Timeline entries fetched
+
+  /timeline/{entityType}/{entityId}:
+    get:
+      tags: [Timeline]
+      summary: Get timeline for a specific entity
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [Lead, Customer, Deal, Activity, User]
+        - name: entityId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: action
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Timeline fetched
+
+  # ─── DASHBOARD ────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      tags: [Dashboard]
+      summary: Get overall CRM statistics
+      description: |
+        Returns aggregated stats. Sales Executives see only their own data.
+      responses:
+        '200':
+          description: Statistics fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leads:
+                    type: object
+                    properties:
+                      total: { type: integer }
+                      new: { type: integer }
+                      qualified: { type: integer }
+                      converted: { type: integer }
+                      lost: { type: integer }
+                      conversionRate: { type: string }
+                  customers:
+                    type: object
+                    properties:
+                      total: { type: integer }
+                  deals:
+                    type: object
+                    properties:
+                      total: { type: integer }
+                      open: { type: integer }
+                      won: { type: integer }
+                      lost: { type: integer }
+                      totalRevenue: { type: number }
+                      expectedRevenue: { type: number }
+                  activities:
+                    type: object
+                    properties:
+                      pending: { type: integer }
+                      overdue: { type: integer }
+
+  /dashboard/pipeline:
+    get:
+      tags: [Dashboard]
+      summary: Get sales pipeline by deal stage
+      responses:
+        '200':
+          description: Pipeline data fetched
+          content:
+            application/json:
+              example:
+                data:
+                  - stage: Qualification
+                    count: 10
+                    totalValue: 500000
+                    expectedRevenue: 250000
+                    avgProbability: 50
+                  - stage: Discovery
+                    count: 8
+                    totalValue: 400000
+                    expectedRevenue: 280000
+                    avgProbability: 70
+
+  /dashboard/team-performance:
+    get:
+      tags: [Dashboard]
+      summary: Get team performance metrics (Admin/Manager)
+      responses:
+        '200':
+          description: Team performance data
+
+  /dashboard/lead-sources:
+    get:
+      tags: [Dashboard]
+      summary: Get leads grouped by source with conversion rates
+      responses:
+        '200':
+          description: Lead source statistics
